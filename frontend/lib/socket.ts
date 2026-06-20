@@ -1,20 +1,44 @@
 import { io } from "socket.io-client";
 
-// Guard for SSR build time and dynamic resolution for client runtime
-const isBrowser = typeof window !== "undefined";
-const isProduction = isBrowser && window.location.hostname !== "localhost";
+// Resolve connection details depending on environment
+const getSocketConfig = () => {
+  if (typeof window === "undefined") {
+    // Safe fallback for SSR build-time execution
+    return {
+      url: "http://localhost:8000",
+      path: "/socket.io"
+    };
+  }
 
-const SOCKET_SERVER_URL = isProduction
-  ? window.location.origin
-  : (process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "http://localhost:8000");
+  // 1. If an environment variable is explicitly provided, prioritize it
+  if (process.env.NEXT_PUBLIC_SOCKET_SERVER_URL) {
+    return {
+      url: process.env.NEXT_PUBLIC_SOCKET_SERVER_URL,
+      path: "/socket.io"
+    };
+  }
 
-const SOCKET_PATH = isProduction
-  ? "/_/backend/socket.io"
-  : "/socket.io";
+  // 2. Local development fallback
+  if (window.location.hostname === "localhost") {
+    return {
+      url: "http://localhost:8000",
+      path: "/socket.io"
+    };
+  }
 
-export const socket = io(SOCKET_SERVER_URL, {
+  // 3. Deployed monorepo fallback (if hosted on a platform proxying /_/backend)
+  return {
+    url: window.location.origin,
+    path: "/_/backend/socket.io"
+  };
+};
+
+const config = getSocketConfig();
+
+export const socket = io(config.url, {
   autoConnect: false,
   transports: ["websocket", "polling"],
-  path: SOCKET_PATH,
+  path: config.path,
 });
+
 
