@@ -1,0 +1,451 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-heading);
+  --font-numbers: var(--font-numbers);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  
+  /* Brand/Game specific palette */
+  --color-royal-blue: #0b1a30;
+  --color-royal-blue-light: #162f55;
+  --color-royal-blue-glow: #1a3c6d;
+  --color-gold: #dfb756;
+  --color-gold-light: #f7e2b3;
+  --color-gold-dark: #c49d47;
+  --color-charcoal: #090a0d;
+  --color-charcoal-light: #12151c;
+  --color-ivory: #f5f2eb;
+  --color-slate-grey: #8290a6;
+}
+
+:root {
+  /* Default luxury boardroom dark mode */
+  --background: #090a0d;
+  --foreground: #f5f2eb; /* Ivory */
+  --card: #12151c; /* Charcoal Navy */
+  --card-foreground: #f5f2eb;
+  --popover: #12151c;
+  --popover-foreground: #f5f2eb;
+  
+  --primary: #0b1a30; /* Deep Royal Blue */
+  --primary-foreground: #f5f2eb;
+  
+  --secondary: #19202c; /* Charcoal-Slate */
+  --secondary-foreground: #f5f2eb;
+  
+  --muted: #0e1116;
+  --muted-foreground: #8290a6; /* Slate */
+  
+  --accent: #c49d47; /* Rich Gold */
+  --accent-foreground: #090a0d;
+  
+  --destructive: #c23b3b; /* Crimson Red */
+  --border: #1c2331;
+  --input: #1c2331;
+  --ring: #c49d47;
+  
+  --chart-1: #dfb756;
+  --chart-2: #3b82f6;
+  --chart-3: #10b981;
+  --chart-4: #ef4444;
+  --chart-5: #a855f7;
+  
+  --radius: 0.5rem;
+
+  --sidebar: #0b0d12;
+  --sidebar-foreground: #f5f2eb;
+  --sidebar-primary: #dfb756;
+  --sidebar-primary-foreground: #090a0d;
+  --sidebar-accent: #19202c;
+  --sidebar-accent-foreground: #dfb756;
+  --sidebar-border: #1c2331;
+  --sidebar-ring: #dfb756;
+}
+
+.dark {
+  /* Maintain luxury dark theme consistently */
+  --background: #090a0d;
+  --foreground: #f5f2eb;
+  --card: #12151c;
+  --card-foreground: #f5f2eb;
+  --popover: #12151c;
+  --popover-foreground: #f5f2eb;
+  --primary: #0b1a30;
+  --primary-foreground: #f5f2eb;
+  --secondary: #19202c;
+  --secondary-foreground: #f5f2eb;
+  --muted: #0e1116;
+  --muted-foreground: #8290a6;
+  --accent: #c49d47;
+  --accent-foreground: #090a0d;
+  --destructive: #c23b3b;
+  --border: #1c2331;
+  --input: #1c2331;
+  --ring: #c49d47;
+}
+
+@layer base {
+  * {
+    @apply border-border/40 outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground overflow-x-hidden font-sans antialiased;
+    background-image: 
+      radial-gradient(circle at 50% 20%, #11223e 0%, transparent 60%),
+      radial-gradient(circle at 0% 0%, #0c1424 0%, #090a0d 100%);
+    background-attachment: fixed;
+  }
+  html {
+    @apply font-sans;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading tracking-wide;
+  }
+}
+
+/* Custom Board game & Card styles */
+
+.grid-board {
+  display: grid;
+  grid-template-columns: 2fr repeat(9, 1.1fr) 2fr;
+  grid-template-rows: 2fr repeat(9, 1.1fr) 2fr;
+  container-type: inline-size;
+}
+
+/* Card flip animation */
+.perspective-1000 {
+  perspective: 1000px;
+}
+.transform-style-3d {
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  transform: rotateY(180deg);
+}
+
+/* Luxury card containers */
+.glass-panel {
+  background: linear-gradient(135deg, rgba(18, 21, 28, 0.9) 0%, rgba(10, 12, 16, 0.95) 100%);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(196, 157, 71, 0.2);
+  box-shadow: 
+    0 10px 30px -10px rgba(0, 0, 0, 0.7),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+}
+
+.glass-panel-glow {
+  background: linear-gradient(135deg, rgba(22, 26, 36, 0.95) 0%, rgba(14, 16, 22, 0.98) 100%);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(196, 157, 71, 0.35);
+  box-shadow: 
+    0 15px 40px -5px rgba(0, 0, 0, 0.8),
+    0 0 25px rgba(196, 157, 71, 0.1),
+    inset 0 1px 1px rgba(255, 255, 255, 0.08);
+}
+
+/* Gold Gradient text and buttons */
+.text-gold-gradient {
+  background: linear-gradient(135deg, #c49d47 0%, #f7e2b3 50%, #c49d47 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.bg-gold-gradient {
+  background: linear-gradient(135deg, #a88132 0%, #dfb756 50%, #f7e2b3 100%);
+}
+
+.border-gold-gradient {
+  border-image: linear-gradient(135deg, #a88132 0%, #dfb756 50%, #f7e2b3 100%) 1;
+}
+
+/* Premium Button System */
+.btn-game-primary {
+  background: linear-gradient(135deg, #a88132 0%, #dfb756 50%, #f7e2b3 100%);
+  color: #090a0d;
+  font-weight: 800;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.3);
+  box-shadow: 
+    0 4px 12px rgba(196, 157, 71, 0.35),
+    inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  border: 1px solid #dfb756;
+  transition: all 0.2s ease-in-out;
+}
+.btn-game-primary:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 
+    0 6px 18px rgba(196, 157, 71, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+.btn-game-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 
+    0 2px 6px rgba(196, 157, 71, 0.3),
+    inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+.btn-game-primary:disabled {
+  background: #1a202c;
+  color: #4a5568;
+  border-color: #2d3748;
+  box-shadow: none;
+  text-shadow: none;
+  cursor: not-allowed;
+}
+
+.btn-game-secondary {
+  background: #0b1a30;
+  color: #f5f2eb;
+  border: 1px solid rgba(196, 157, 71, 0.4);
+  box-shadow: 
+    0 4px 10px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease-in-out;
+}
+.btn-game-secondary:hover:not(:disabled) {
+  background: #102544;
+  border-color: rgba(196, 157, 71, 0.7);
+  box-shadow: 
+    0 6px 15px rgba(0, 0, 0, 0.4),
+    0 0 10px rgba(196, 157, 71, 0.1);
+}
+.btn-game-secondary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.btn-game-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-game-success {
+  background: linear-gradient(135deg, #0f5132 0%, #157347 50%, #198754 100%);
+  color: #f5f2eb;
+  border: 1px solid #198754;
+  box-shadow: 
+    0 4px 12px rgba(25, 135, 84, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+.btn-game-success:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 
+    0 6px 16px rgba(25, 135, 84, 0.4);
+}
+.btn-game-success:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-game-danger {
+  background: linear-gradient(135deg, #58151c 0%, #842029 50%, #b30615 100%);
+  color: #f5f2eb;
+  border: 1px solid #b30615;
+  box-shadow: 
+    0 4px 12px rgba(179, 6, 21, 0.25),
+    inset 0 1px 1px rgba(255, 255, 255, 0.2);
+  transition: all 0.2s ease;
+}
+.btn-game-danger:hover:not(:disabled) {
+  filter: brightness(1.15);
+  box-shadow: 
+    0 6px 16px rgba(179, 6, 21, 0.4);
+}
+.btn-game-danger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Custom wooden house & brick hotel board pieces */
+.token-house-3d {
+  width: 10px;
+  height: 8px;
+  background-color: #198754;
+  border-radius: 1px;
+  position: relative;
+  box-shadow: 
+    0 1px 2px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.token-house-3d::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-bottom: 4px solid #146c43;
+}
+
+.token-hotel-3d {
+  width: 16px;
+  height: 11px;
+  background-color: #dc3545;
+  border-radius: 1.5px;
+  position: relative;
+  box-shadow: 
+    0 1px 3px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+.token-hotel-3d::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-bottom: 5px solid #bd2130;
+}
+
+/* Dice shaking keyframe */
+@keyframes shake-dice {
+  0% { transform: translate(2px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-3deg); }
+  20% { transform: translate(-3px, 0px) rotate(3deg); }
+  30% { transform: translate(0px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-2deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(2px, 1px) rotate(-3deg); }
+  80% { transform: translate(-1px, -1px) rotate(4deg); }
+  90% { transform: translate(2px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
+.animate-dice-shake {
+  animation: shake-dice 0.4s infinite;
+}
+
+/* Soft bounce animation for player tokens */
+@keyframes bounce-short {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-bounce-short {
+  animation: bounce-short 1.2s ease-in-out infinite;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(9, 10, 13, 0.8);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(196, 157, 71, 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(196, 157, 71, 0.55);
+}
+
+/* Slide in from right animation for mobile drawer */
+@keyframes slide-in-right {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Hide scrollbar utility for custom scroll components */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Physical Board game borders and lines */
+.tile-deed-accent {
+  box-shadow: inset 0 -4px 0 rgba(0, 0, 0, 0.15);
+}
+
+/* Premium Alert Aura for critical timers (<5s) */
+@keyframes aura-alert-glow {
+  0%, 100% {
+    box-shadow: 0 0 15px rgba(196, 157, 71, 0.65), 0 0 30px rgba(196, 157, 71, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(194, 59, 59, 0.95), 0 0 50px rgba(194, 59, 59, 0.55);
+  }
+}
+
+.animate-critical-glow {
+  animation: aura-alert-glow 1s infinite ease-in-out;
+  border-color: #c23b3b !important;
+}
+
+/* Mobile responsive scaling for board elements */
+@media (max-width: 640px) {
+  .token-house-3d {
+    width: 6px;
+    height: 5px;
+    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+  }
+  .token-house-3d::after {
+    top: -3px;
+    border-left-width: 3px;
+    border-right-width: 3px;
+    border-bottom-width: 3px;
+  }
+  .token-hotel-3d {
+    width: 11px;
+    height: 8px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  }
+  .token-hotel-3d::after {
+    top: -4px;
+    border-left-width: 5.5px;
+    border-right-width: 5.5px;
+    border-bottom-width: 4px;
+  }
+}
