@@ -88,6 +88,10 @@ async def JOIN_LOBBY(sid, data: Dict[str, Any]):
     # Check if host or joiner
     state = await manager.get_room(room_id)
     if not state:
+        is_creating = data.get("isCreating", False)
+        if not is_creating:
+            await sio.emit("ERROR", {"message": f"Boardroom code {room_id} is invalid or has expired."}, to=sid)
+            return
         state = await manager.create_room(room_id, player)
     else:
         # Check if token is already claimed by another player in the room

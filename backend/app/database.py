@@ -10,8 +10,8 @@ db_client = None
 
 if MONGODB_URI and MONGODB_URI.strip():
     try:
-        # Initialize the motor client
-        db_client = AsyncIOMotorClient(MONGODB_URI)
+        # Initialize the motor client with a 5-second server selection timeout to prevent hanging
+        db_client = AsyncIOMotorClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
         # We can extract the database name from the URI or default to "propempire"
         db = db_client.get_database("propempire")
         rooms_collection = db.get_collection("rooms")

@@ -15,6 +15,27 @@ from app.socket_handlers import sio
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Verify MongoDB connection on startup to prevent hanging/blocking
+    import logging
+    import app.database as db_module
+    
+    logger = logging.getLogger("uvicorn.error")
+    
+    if db_module.db_client is not None:
+        try:
+            logger.info("Verifying MongoDB connectivity...")
+            # Ping the database to verify connectivity (with a 5-second timeout)
+            await asyncio.wait_for(
+                db_module.db_client.admin.command('ping'),
+                timeout=5.0
+            )
+            logger.info("MongoDB connection verified successfully.")
+        except Exception as e:
+            logger.error(f"MongoDB connection check failed ({type(e).__name__}): {e}")
+            logger.warning("PropEmpire backend will fall back to local in-memory room management for this session.")
+            db_module.rooms_collection = None
+            db_module.db_client = None
+
     from app.socket_handlers import run_stale_rooms_cleanup
     cleanup_task = asyncio.create_task(run_stale_rooms_cleanup())
     yield

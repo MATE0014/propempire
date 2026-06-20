@@ -66,7 +66,7 @@ interface GameContextProps {
   useEscapeCard: () => void;
   tryDoubleRoll: () => void;
   startGame: (settings?: { maxPlayers: number; startingCapital: number; turnTimerLimit: number; rollTimerBonus: number; botsEnabled: boolean; botCount: number; auctionTimerLimit?: number }) => void;
-  setupNewGame: (playersCount: number, selectedToken: TokenType, roomId?: string) => void;
+  setupNewGame: (playersCount: number, selectedToken: TokenType, roomId?: string, isCreating?: boolean) => void;
   isRolling: boolean;
   botStatusText: string;
   setSelectedTileIndex: (index: number) => void;
@@ -141,12 +141,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           if (urlRoomId) {
             const guestName = localStorage.getItem("propempire_username") || "Guest Investor";
             const selectedToken = (localStorage.getItem("propempire_token") as TokenType) || "Rocket";
+            const isCreating = sessionStorage.getItem(`host_room_${urlRoomId}`) === "true";
             socket.emit("JOIN_LOBBY", {
               roomId: urlRoomId,
               playerId: myPlayerId,
               name: guestName,
               avatar: "💼",
-              token: selectedToken
+              token: selectedToken,
+              isCreating: isCreating
             });
           }
         }
@@ -425,7 +427,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   }, [gameState.auction.isActive, useBackend]);
 
   // Initialize Lobby Join
-  const setupNewGame = (playersCount: number, selectedToken: TokenType, roomId?: string) => {
+  const setupNewGame = (playersCount: number, selectedToken: TokenType, roomId?: string, isCreatingParam?: boolean) => {
     const targetRoomId = roomId || gameState.roomId;
     let guestName = "Guest Investor";
     if (typeof window !== "undefined") {
@@ -433,12 +435,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (useBackend) {
+      const isCreating = isCreatingParam || (typeof window !== "undefined" ? sessionStorage.getItem(`host_room_${targetRoomId}`) === "true" : false);
       socket.emit("JOIN_LOBBY", {
         roomId: targetRoomId,
         playerId: myPlayerId,
         name: guestName,
         avatar: "💼",
-        token: selectedToken
+        token: selectedToken,
+        isCreating: isCreating
       });
     } else {
       // Setup local room state

@@ -68,7 +68,10 @@ export default function LandingPage() {
 
     // Generate room code and setup
     const newRoomCode = `PE-${Math.floor(1000 + Math.random() * 9000)}`;
-    setupNewGame(4, selectedToken, newRoomCode);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(`host_room_${newRoomCode}`, "true");
+    }
+    setupNewGame(4, selectedToken, newRoomCode, true);
     router.push(`/lobby/${newRoomCode}`);
   };
 
@@ -79,7 +82,10 @@ export default function LandingPage() {
     saveGuestInfo(freshName, selectedToken);
 
     const targetRoom = roomCodeInput.toUpperCase().trim();
-    setupNewGame(4, selectedToken, targetRoom);
+    if (typeof window !== "undefined") {
+      sessionStorage.removeItem(`host_room_${targetRoom}`);
+    }
+    setupNewGame(4, selectedToken, targetRoom, false);
     router.push(`/lobby/${targetRoom}`);
   };
 
