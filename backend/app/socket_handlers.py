@@ -53,11 +53,20 @@ async def JOIN_LOBBY(sid, data: Dict[str, Any]):
     avatar = data.get("avatar", "💼")
     token = data.get("token", "Rocket")
     
-    # Security Check: Prevent Active Session Hijacking
-    for s, meta in sid_to_player.items():
-        if meta["playerId"] == player_id and s != sid:
-            await sio.emit("ERROR", {"message": "Session already active for this player."}, to=sid)
-            return
+    # Evict any active session for this player (disconnecting the old tab/device)
+    old_sids = [s for s, meta in list(sid_to_player.items()) if meta["playerId"] == player_id and s != sid]
+    for old_sid in old_sids:
+        # Notify the old session that it was disconnected
+        await sio.emit("ERROR", {"message": "You have been disconnected because this player joined from another tab or device."}, to=old_sid)
+        
+        # Remove from sid_to_player map BEFORE calling disconnect to avoid triggering leave_room
+        if old_sid in sid_to_player:
+            del sid_to_player[old_sid]
+            
+        try:
+            await sio.disconnect(old_sid)
+        except Exception:
+            pass
 
     player = Player(
         id=player_id,
