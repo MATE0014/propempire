@@ -1161,13 +1161,13 @@ export default function GameRoomPage() {
       {/* MAIN VIEWPORT */}
       <main className="flex-1 w-full mx-auto px-2 sm:px-4 py-4 sm:py-6 relative">
 
-        {/* DESKTOP LAYOUT (lg:grid) */}
-        <div className="hidden lg:grid grid-cols-12 gap-6 items-stretch w-full h-full">
+        {/* DESKTOP LAYOUT (xl:grid) */}
+        <div className="hidden xl:grid grid-cols-12 gap-6 items-stretch w-full h-full">
 
           {/* ======================================= */}
           {/* 1. LEFT SIDEBAR: PLAYERS LIST (3 Cols) */}
           {/* ======================================= */}
-          <section className="lg:col-span-3 space-y-4 flex flex-col justify-start">
+          <section className="xl:col-span-3 space-y-4 flex flex-col justify-start">
           <div className="glass-panel p-4 rounded-xl space-y-3 flex-grow shadow-lg">
             <h3 className="text-xs font-black uppercase text-ivory tracking-wider pb-2 border-b border-border/20 flex items-center justify-between font-heading">
               <span>LOBBY SHAREHOLDERS</span>
@@ -1254,7 +1254,7 @@ export default function GameRoomPage() {
         {/* ======================================= */}
         {/* 2. CENTER PIECE: THE 2D GRID BOARD (6 Cols) */}
         {/* ======================================= */}
-        <section className="lg:col-span-6 flex flex-col items-center justify-start gap-4">
+        <section className="xl:col-span-6 flex flex-col items-center justify-start gap-4">
           <div className="w-full relative aspect-square">
             {/* The 11x11 Grid Board container */}
             <div className="grid-board w-full h-full bg-charcoal p-1.5 rounded-2xl border border-border/30 relative shadow-2xl overflow-hidden select-none">
@@ -1390,7 +1390,7 @@ export default function GameRoomPage() {
         {/* ======================================= */}
         {/* 3. RIGHT SIDEBAR: DICE, TURN & LOGS (3 Cols) */}
         {/* ======================================= */}
-        <section className="lg:col-span-3 space-y-4 flex flex-col justify-start">
+        <section className="xl:col-span-3 space-y-4 flex flex-col justify-start">
           {/* CURRENT TURN PANEL */}
           <div className="glass-panel p-4 rounded-xl shadow-lg relative overflow-hidden">
             <div className="flex items-center justify-between">
@@ -1556,7 +1556,7 @@ export default function GameRoomPage() {
       {/* ======================================= */}
       {/* 4. BOTTOM ACTION PANEL (Context-aware) */}
       {/* ======================================= */}
-      <footer className="hidden lg:block border-t border-border bg-card/80 backdrop-blur-md sticky bottom-0 z-40 p-4">
+      <footer className="hidden xl:block border-t border-border bg-card/80 backdrop-blur-md sticky bottom-0 z-40 p-4">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
 
           {/* Quick instructions status */}
@@ -2682,8 +2682,8 @@ export default function GameRoomPage() {
         </div>
       )}
 
-      {/* MOBILE COMPACT VIEWPORT (lg:hidden) */}
-      <div className="lg:hidden flex flex-col items-center justify-start gap-4 w-full pb-28">
+      {/* MOBILE COMPACT VIEWPORT (xl:hidden) */}
+      <div className="xl:hidden flex flex-col items-center justify-start gap-4 w-full pb-28">
         
         {/* Top Status & Timer Bar */}
         <div className="w-full flex items-center justify-between bg-card/65 backdrop-blur-md border border-border/80 px-3.5 py-2.5 rounded-xl shadow-lg animate-fade-in">
@@ -2694,7 +2694,7 @@ export default function GameRoomPage() {
 
           <div className="text-center">
             <span className="text-[8px] font-black uppercase text-slate-grey tracking-wider block font-heading">ACTIVE TURN</span>
-            <span className="text-xs font-black text-accent uppercase leading-none mt-0.5 font-heading">{activePlayer?.name.split(" ")[0]}</span>
+            <span className="text-xs font-black text-accent uppercase leading-none mt-0.5 font-heading max-w-[80px] sm:max-w-[120px] truncate inline-block">{activePlayer?.name.split(" ")[0]}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -2984,25 +2984,28 @@ export default function GameRoomPage() {
       </div>
 
       {/* MOBILE FLOATING CIRCULAR BUTTONS */}
-      <div className="lg:hidden">
+      <div className="xl:hidden">
 
-        {/* Trade button (Bottom Left) */}
-        <button
-          onClick={handleProposeTradeClick}
-          className="fixed bottom-6 left-4 z-40 h-12 w-12 rounded-full btn-game-secondary flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
-          title="Propose Trade"
-        >
-          <ArrowRightLeft className="h-5 w-5" />
-        </button>
+        {/* Left Actions Container */}
+        <div className="fixed bottom-6 left-4 z-40 flex gap-2">
+          {/* Trade button */}
+          <button
+            onClick={handleProposeTradeClick}
+            className="h-12 w-12 rounded-full btn-game-secondary flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer shrink-0"
+            title="Propose Trade"
+          >
+            <ArrowRightLeft className="h-5 w-5" />
+          </button>
 
-        {/* Assets button (Bottom Left next to Trade) */}
-        <button
-          onClick={() => setShowAssetsModal(true)}
-          className="fixed bottom-6 left-20 z-40 h-12 w-12 rounded-full btn-game-secondary flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer"
-          title="View Assets"
-        >
-          <Scale className="h-5 w-5" />
-        </button>
+          {/* Assets button */}
+          <button
+            onClick={() => setShowAssetsModal(true)}
+            className="h-12 w-12 rounded-full btn-game-secondary flex items-center justify-center shadow-lg active:scale-95 transition-all cursor-pointer shrink-0"
+            title="View Assets"
+          >
+            <Scale className="h-5 w-5" />
+          </button>
+        </div>
 
         {/* Chat & Logs button (Bottom Right) */}
         <button
@@ -3055,13 +3058,14 @@ export default function GameRoomPage() {
               ) : null}
             </div>
           ) : activePlayer ? (
-            <div className="flex items-center gap-2 bg-charcoal/95 backdrop-blur-md border border-accent/30 px-4 py-2.5 rounded-full shadow-2xl animate-fade-in glass-panel whitespace-nowrap">
-              <span className="h-2 w-2 rounded-full bg-accent animate-ping" />
-              <span className="text-[9px] font-black uppercase text-slate-grey tracking-wider font-heading">
-                {activePlayer.name.split(" ")[0]}'s Turn
+            <div className="flex items-center gap-1.5 bg-charcoal/95 backdrop-blur-md border border-accent/30 px-3.5 py-2 rounded-full shadow-2xl animate-fade-in glass-panel whitespace-nowrap text-[9px] font-black uppercase text-slate-grey tracking-wider font-heading">
+              <span className="h-1.5 w-1.5 rounded-full bg-accent animate-ping shrink-0" />
+              <span className="max-w-[65px] sm:max-w-[100px] truncate inline-block text-slate-grey font-extrabold align-bottom">
+                {activePlayer.name.split(" ")[0]}
               </span>
-              <div className="h-3 w-[1px] bg-border/40 mx-1" />
-              <span className="text-[10px] font-black text-accent font-numbers">{gameState.turnTimer}s</span>
+              <span className="shrink-0 font-extrabold text-slate-grey">'s Turn</span>
+              <div className="h-3 w-[1px] bg-border/40 mx-1 shrink-0" />
+              <span className="text-[10px] font-black text-accent font-numbers shrink-0">{gameState.turnTimer}s</span>
             </div>
           ) : null}
         </div>
@@ -3069,7 +3073,7 @@ export default function GameRoomPage() {
 
       {/* MOBILE CHAT SLIDE OUT DRAWER */}
       {showMobileChatSheet && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm lg:hidden">
+        <div className="fixed inset-0 z-50 flex justify-end bg-slate-950/80 backdrop-blur-sm xl:hidden">
           <div className="w-full max-w-xs h-full bg-card border-l border-accent/20 p-4 shadow-2xl flex flex-col justify-between animate-slide-in-right glass-panel-glow">
             
             {/* Header */}

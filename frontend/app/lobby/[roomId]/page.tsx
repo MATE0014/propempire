@@ -75,15 +75,15 @@ export default function LobbyPage() {
     setupNewGame(4, currentToken, roomId);
   }, [roomId]);
 
-  // Sync inputs with humanPlayer details
+  // Sync inputs with humanPlayer details when modal is closed
   useEffect(() => {
-    if (humanPlayer) {
+    if (humanPlayer && !showCustomizeModal) {
       setTimeout(() => {
         setGuestNameInput(humanPlayer.name);
         setSelectedToken(humanPlayer.token);
       }, 0);
     }
-  }, [humanPlayer]);
+  }, [humanPlayer, showCustomizeModal]);
 
   useEffect(() => {
     if (gameState.status === "PLAYING") {
@@ -509,9 +509,7 @@ export default function LobbyPage() {
                   maxLength={18}
                   value={guestNameInput}
                   onChange={(e) => {
-                    const val = e.target.value;
-                    setGuestNameInput(val);
-                    updatePlayerInfo(val || "Guest Investor", selectedToken);
+                    setGuestNameInput(e.target.value);
                   }}
                   className="w-full px-4 py-2.5 bg-secondary/80 border border-border/40 rounded-lg focus:border-accent text-ivory font-bold outline-none text-xs"
                 />
@@ -557,7 +555,10 @@ export default function LobbyPage() {
             {/* Modal footer */}
             <div className="pt-4 border-t border-border/20 flex justify-end">
               <button
-                onClick={() => setShowCustomizeModal(false)}
+                onClick={() => {
+                  updatePlayerInfo(guestNameInput || "Guest Investor", selectedToken);
+                  setShowCustomizeModal(false);
+                }}
                 className="px-5 py-2.5 btn-game-primary rounded-lg text-xs cursor-pointer"
               >
                 Save & Close
