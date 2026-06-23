@@ -514,6 +514,41 @@ async def UNMORTGAGE(sid, data: Dict[str, Any]):
     await sio.emit("ROOM_STATE_UPDATED", state.model_dump(), room=room_id)
 
 @sio.event
+async def SELL_HOUSE(sid, data: Dict[str, Any]):
+    meta = sid_to_player.get(sid)
+    if not meta: return
+    room_id = meta["roomId"]
+    
+    # Security Check: Verify room matches data roomId if provided
+    if data.get("roomId") and data.get("roomId").upper() != room_id: return
+    
+    state = await manager.get_room(room_id)
+    if not state or state.status != "PLAYING": return
+    
+    tile_idx = data.get("tileIndex", -1)
+    # Security: Validate index boundaries to prevent IndexError
+    if tile_idx < 0 or tile_idx >= len(state.tiles): return
+    
+    tile = state.tiles[tile_idx]
+    p = next((pl for pl in state.players if pl.id == meta["playerId"]), None)
+    if not p or p.isBankrupt or not tile or tile.ownerId != p.id or tile.houseCount <= 0 or tile.type != "PROPERTY": return
+    
+    # Enforce even selling (must sell from the property with the most houses in the district first)
+    district_tiles = [t for t in state.tiles if t.district == tile.district]
+    max_houses = max(t.houseCount for t in district_tiles)
+    if tile.houseCount != max_houses: return
+    
+    refund = (tile.houseCost or 100) // 2
+    p.balance += refund
+    
+    label = "Hotel" if tile.houseCount == 5 else "House"
+    tile.houseCount -= 1
+    
+    state.logs.insert(0, create_log(f"Sold a {label} on {tile.name} (Refunded ◈{refund}).", "build"))
+    await manager.save_room(room_id, state)
+    await sio.emit("ROOM_STATE_UPDATED", state.model_dump(), room=room_id)
+
+@sio.event
 async def PROPOSE_TRADE(sid, data: Dict[str, Any]):
     meta = sid_to_player.get(sid)
     if not meta: return

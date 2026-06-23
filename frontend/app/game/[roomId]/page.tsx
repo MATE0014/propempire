@@ -107,6 +107,7 @@ export default function GameRoomPage() {
     setSelectedTileIndex,
     myPlayerId,
     endGame,
+    sellHouse,
     chatMessages,
     sendChatMessage,
     hostEndedResults,
@@ -1083,13 +1084,31 @@ export default function GameRoomPage() {
                   </button>
                 ) : (
                   <>
-                    {/* Mortgage */}
-                    <button
-                      onClick={() => mortgageProperty(selectedTile.index)}
-                      className="py-2.5 btn-game-danger rounded-lg text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer font-heading"
-                    >
-                      <Lock className="h-3.5 w-3.5" /> Mortgage (+◈{selectedTile.mortgageValue})
-                    </button>
+                    {/* Mortgage or Sell Building */}
+                    {selectedTile.houseCount > 0 ? (() => {
+                      const districtTiles = gameState.tiles.filter(dt => dt.district === selectedTile.district);
+                      const maxHouses = Math.max(...districtTiles.map(dt => dt.houseCount));
+                      const canSell = selectedTile.houseCount === maxHouses;
+                      return (
+                        <button
+                          onClick={() => sellHouse(selectedTile.index)}
+                          disabled={!canSell}
+                          title={!canSell ? "Even selling rule: You must sell houses from properties with the most houses first." : ""}
+                          className={`py-2.5 btn-game-danger rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-0.5 transition-all font-heading ${
+                            !canSell ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:bg-red-650"
+                          }`}
+                        >
+                          Sell {selectedTile.houseCount === 5 ? "Hotel" : "House"} (+◈{Math.floor((selectedTile.houseCost || 100) / 2)})
+                        </button>
+                      );
+                    })() : (
+                      <button
+                        onClick={() => mortgageProperty(selectedTile.index)}
+                        className="py-2.5 btn-game-danger rounded-lg text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 transition-all cursor-pointer font-heading"
+                      >
+                        <Lock className="h-3.5 w-3.5" /> Mortgage (+◈{selectedTile.mortgageValue})
+                      </button>
+                    )}
 
                     {/* Build House / Hotel */}
                     {(() => {
@@ -2142,31 +2161,43 @@ export default function GameRoomPage() {
                 backgroundSize: "cover",
                 backgroundPosition: "center"
               }}
-              className="bg-card rounded-2xl p-6 flex flex-col items-center text-center space-y-6 relative overflow-hidden min-h-[350px] justify-center"
+              className="bg-card rounded-2xl border border-accent/20 p-5 flex flex-col items-center text-center relative overflow-hidden min-h-[400px] justify-between shadow-2xl"
             >
-              {/* Semi-transparent dark overlay to ensure readability */}
-              <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-[2px] z-0" />
+              {/* Transparent edge backdrop gradient to prevent card overlay blackout */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-950/20 via-slate-950/40 to-slate-950/70 z-0" />
               
-              <div className="z-10 w-full space-y-6 flex flex-col items-center">
-                <div>
-                  <h3 className="text-xl font-black text-gold-gradient uppercase tracking-wide mt-1 font-heading">
-                    {gameState.drawnCard.card.title}
-                  </h3>
-                </div>
+              {/* Card Type Badge */}
+              <div className="z-10 mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-[10px] font-black uppercase tracking-widest font-heading ${
+                  gameState.drawnCard.isEmpire 
+                    ? "bg-amber-950/80 border-accent text-accent shadow-md shadow-accent/10" 
+                    : "bg-indigo-950/80 border-indigo-500/30 text-indigo-400"
+                }`}>
+                  {gameState.drawnCard.isEmpire ? "👑 Empire Card" : "🚀 Opportunity Card"}
+                </span>
+              </div>
 
-                <p className="text-xs text-ivory leading-relaxed max-w-xs font-semibold font-sans">
+              {/* Central Text Plate container */}
+              <div className="z-10 w-full bg-slate-950/75 backdrop-blur-[4px] border border-border/40 p-4 rounded-xl my-4 space-y-3 flex flex-col items-center shadow-inner">
+                <h3 className="text-base font-black text-gold-gradient uppercase tracking-wide font-heading text-center">
+                  {gameState.drawnCard.card.title}
+                </h3>
+                <p className="text-xs text-slate-200 leading-relaxed font-semibold font-sans text-center max-w-xs">
                   {gameState.drawnCard.card.description.replaceAll("$", "◈")}
                 </p>
+              </div>
 
+              {/* Action Button at bottom */}
+              <div className="z-10 w-full">
                 {activePlayer?.id === myPlayerId ? (
                   <button
                     onClick={dismissCard}
-                    className="w-full py-3.5 btn-game-primary text-slate-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-102 transition-transform cursor-pointer font-heading"
+                    className="w-full py-3 btn-game-primary text-slate-950 font-black uppercase tracking-wider text-xs rounded-xl shadow-lg hover:scale-102 transition-transform cursor-pointer font-heading"
                   >
                     Acknowledge & Execute
                   </button>
                 ) : (
-                  <div className="text-xs text-slate-grey italic font-bold font-sans">
+                  <div className="w-full py-3 bg-secondary/50 border border-border/30 rounded-xl text-xs text-slate-grey italic font-bold font-sans">
                     AI processing event action...
                   </div>
                 )}
@@ -2234,12 +2265,30 @@ export default function GameRoomPage() {
                             </button>
                           ) : (
                             <>
-                              <button
-                                onClick={() => mortgageProperty(t.index)}
-                                className="py-2 btn-game-danger rounded-lg text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 font-heading cursor-pointer"
-                              >
-                                <Lock className="h-3 w-3" /> Mortgage (+${t.mortgageValue})
-                              </button>
+                              {t.houseCount > 0 ? (() => {
+                                const districtTiles = gameState.tiles.filter(dt => dt.district === t.district);
+                                const maxHouses = Math.max(...districtTiles.map(dt => dt.houseCount));
+                                const canSell = t.houseCount === maxHouses;
+                                return (
+                                  <button
+                                    onClick={() => sellHouse(t.index)}
+                                    disabled={!canSell}
+                                    title={!canSell ? "Even selling rule: You must sell houses from properties with the most houses first." : ""}
+                                    className={`py-2 btn-game-danger rounded-lg text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-0.5 font-heading ${
+                                      !canSell ? "opacity-40 cursor-not-allowed" : "cursor-pointer hover:scale-[1.02]"
+                                    }`}
+                                  >
+                                    Sell {t.houseCount === 5 ? "Hotel" : "House"} (+◈{Math.floor((t.houseCost || 100) / 2)})
+                                  </button>
+                                );
+                              })() : (
+                                <button
+                                  onClick={() => mortgageProperty(t.index)}
+                                  className="py-2 btn-game-danger rounded-lg text-[9px] font-bold uppercase tracking-wider flex items-center justify-center gap-1 font-heading cursor-pointer"
+                                >
+                                  <Lock className="h-3 w-3" /> Mortgage (+◈{t.mortgageValue})
+                                </button>
+                              )}
 
                               {t.type === "PROPERTY" && groupOwned && t.houseCount < 4 ? (
                                 <button

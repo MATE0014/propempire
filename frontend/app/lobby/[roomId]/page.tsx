@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import { useGame } from "@/components/game/GameContext";
@@ -42,6 +42,13 @@ export default function LobbyPage() {
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [selectedToken, setSelectedToken] = useState<TokenType>("Rocket");
+  const [inviteUrl, setInviteUrl] = useState("");
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto scroll lobby chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatMessages]);
   const [guestNameInput, setGuestNameInput] = useState("");
   const [chatMessage, setChatMessage] = useState("");
   const [showCustomizeModal, setShowCustomizeModal] = useState(false);
@@ -73,6 +80,9 @@ export default function LobbyPage() {
     // Sync setup when entering lobby
     const currentToken = (typeof window !== "undefined" ? localStorage.getItem("propempire_token") as TokenType : null) || "Rocket";
     setupNewGame(4, currentToken, roomId);
+    if (typeof window !== "undefined") {
+      setInviteUrl(`${window.location.origin}/lobby/${roomId}`);
+    }
   }, [roomId]);
 
   // Sync inputs with humanPlayer details when modal is closed
@@ -166,7 +176,7 @@ export default function LobbyPage() {
               <div className="mt-1 text-xs text-slate-grey flex items-center flex-wrap gap-2">
                 <span>Invite URL:</span>
                 <span className="text-slate-300 underline select-all">
-                  {typeof window !== "undefined" ? `${window.location.origin}/lobby/${roomId}` : `/lobby/${roomId}`}
+                  {inviteUrl || `/lobby/${roomId}`}
                 </span>
                 <button 
                   onClick={handleCopyLink}
@@ -425,7 +435,7 @@ export default function LobbyPage() {
         </div>
 
         {/* RIGHT LOBBY CHAT (4 Columns) */}
-        <div className="lg:col-span-4 flex flex-col h-[500px] lg:h-auto glass-panel rounded-xl overflow-hidden shadow-xl">
+        <div className="lg:col-span-4 flex flex-col h-[500px] lg:h-[550px] glass-panel rounded-xl overflow-hidden shadow-xl">
           {/* Chat header */}
           <div className="px-4 py-3 bg-secondary/20 border-b border-border/30 flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-accent" />
@@ -459,6 +469,7 @@ export default function LobbyPage() {
                 );
               })
             )}
+            <div ref={chatEndRef} />
           </div>
 
           {/* Chat input form */}

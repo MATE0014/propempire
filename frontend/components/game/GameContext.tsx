@@ -67,6 +67,7 @@ interface GameContextProps {
   tryDoubleRoll: () => void;
   startGame: (settings?: { maxPlayers: number; startingCapital: number; turnTimerLimit: number; rollTimerBonus: number; botsEnabled: boolean; botCount: number; auctionTimerLimit?: number }) => void;
   setupNewGame: (playersCount: number, selectedToken: TokenType, roomId?: string, isCreating?: boolean) => void;
+  sellHouse: (tileIdx: number) => void;
   isRolling: boolean;
   botStatusText: string;
   setSelectedTileIndex: (index: number) => void;
@@ -168,7 +169,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setUseBackend(true);
       setGameState(prev => ({
         ...prev,
-        logs: [createLog("Linked to real-time multiplayer backend server. Boardroom synchronized.", "system"), ...prev.logs]
+        logs: [...prev.logs, createLog("Linked to real-time multiplayer backend server. Boardroom synchronized.", "system")]
       }));
     };
 
@@ -176,12 +177,19 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setUseBackend(false);
       setGameState(prev => ({
         ...prev,
-        logs: [createLog("Connection interrupted. Boardroom switched to local boardroom emulation.", "system"), ...prev.logs]
+        logs: [...prev.logs, createLog("Connection interrupted. Boardroom switched to local boardroom emulation.", "system")]
       }));
     };
 
     const handleStateUpdate = (newState: GameState) => {
-      setGameState(newState);
+      setGameState(prev => {
+        const orderedLogs = newState.logs ? [...newState.logs].reverse() : [];
+        return {
+          ...newState,
+          logs: orderedLogs,
+          selectedTileIndex: prev.selectedTileIndex // Preserve client-side selected tile index
+        };
+      });
       // Stop local loaders
       setBotStatusText("");
     };
@@ -262,34 +270,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                   p.balance -= 50;
                   p.inDetention = false;
                   p.detentionTurns = 0;
-                  nextState.logs.unshift(createLog(`${p.name} paid ◈50 fine to clear Detention (Auto-Escaped).`, "jail"));
+                  nextState.logs.push(createLog(`${p.name} paid ◈50 fine to clear Detention (Auto-Escaped).`, "jail"));
                 } else if (p.escapeCardsCount > 0) {
                   p.escapeCardsCount--;
                   p.inDetention = false;
                   p.detentionTurns = 0;
-                  nextState.logs.unshift(createLog(`${p.name} used Detention Clearance Card (Auto-Escaped).`, "jail"));
+                  nextState.logs.push(createLog(`${p.name} used Detention Clearance Card (Auto-Escaped).`, "jail"));
                 } else {
                   // Try double roll
                   const d1 = Math.floor(Math.random() * 6) + 1;
                   const d2 = Math.floor(Math.random() * 6) + 1;
                   nextState.dice = [d1, d2];
                   nextState.hasRolledThisTurn = true;
-                  nextState.logs.unshift(createLog(`${p.name} auto-rolled [${d1}, ${d2}] escaping Detention.`, "roll"));
+                  nextState.logs.push(createLog(`${p.name} auto-rolled [${d1}, ${d2}] escaping Detention.`, "roll"));
                   if (d1 === d2) {
                     p.inDetention = false;
                     p.detentionTurns = 0;
                     const targetPos = (p.position + d1 + d2) % 40;
                     p.position = targetPos;
-                    nextState.logs.unshift(createLog(`${p.name} rolled doubles and escaped to ${nextState.tiles[targetPos].name}!`, "jail"));
+                    nextState.logs.push(createLog(`${p.name} rolled doubles and escaped to ${nextState.tiles[targetPos].name}!`, "jail"));
                     nextState = resolveTileLanding(nextState, activeIdx, targetPos, d1 + d2);
                   } else {
                     p.detentionTurns++;
-                    nextState.logs.unshift(createLog(`${p.name} failed doubles (Detention turn ${p.detentionTurns}/3).`, "jail"));
+                    nextState.logs.push(createLog(`${p.name} failed doubles (Detention turn ${p.detentionTurns}/3).`, "jail"));
                     if (p.detentionTurns >= 3) {
                       p.balance = Math.max(0, p.balance - 50);
                       p.inDetention = false;
                       p.detentionTurns = 0;
-                      nextState.logs.unshift(createLog(`${p.name} served maximum term. Paid forced fine of ◈50.`, "jail"));
+                      nextState.logs.push(createLog(`${p.name} served maximum term. Paid forced fine of ◈50.`, "jail"));
                       nextState = handleBankruptcy(nextState, activeIdx);
                     }
                   }
@@ -304,12 +312,12 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 const steps = d1 + d2;
                 const oldPos = p.position;
                 const targetPos = (oldPos + steps) % 40;
+                p.position = targetPos;
+                nextState.logs.push(createLog(`${p.name} auto-rolled [${d1}, ${d2}] and landed on ${nextState.tiles[targetPos].name}.`, "roll"));
                 if (targetPos < oldPos) {
                   p.balance += 200;
-                  nextState.logs.unshift(createLog(`${p.name} passed START and collected ◈200 surplus.`, "system"));
+                  nextState.logs.push(createLog(`${p.name} passed START and collected ◈200 surplus.`, "system"));
                 }
-                p.position = targetPos;
-                nextState.logs.unshift(createLog(`${p.name} auto-rolled [${d1}, ${d2}] and landed on ${nextState.tiles[targetPos].name}.`, "roll"));
                 nextState = resolveTileLanding(nextState, activeIdx, targetPos, steps);
               }
             }
@@ -328,7 +336,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
               if (nextState.drawnCard) {
                 const result = nextState.drawnCard.card.action(nextState, activeIdx);
                 nextState = result.state;
-                nextState.logs.unshift(createLog(result.log, "card"));
+                nextState.logs.push(createLog(result.log, "card"));
                 nextState.drawnCard = null;
               }
               
@@ -343,7 +351,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                 hasRolledThisTurn: false,
                 turnTimer: nextState.turnTimerLimit || 60,
                 drawnCard: null,
-                logs: [createLog(`--- Turn transitioned due to timeout to ${nextState.players[nextIdx].name} ---`), ...nextState.logs]
+                logs: [...nextState.logs, createLog(`--- Turn transitioned due to timeout to ${nextState.players[nextIdx].name} ---`)]
               };
             }
           }
@@ -581,7 +589,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           botsEnabled: botsEnabled,
           botCount: botCount,
           auctionTimerLimit: auctionTimerLimit,
-          logs: [createLog("PropEmpire match started! Game loop initialised."), ...prev.logs]
+          logs: [...prev.logs, createLog("PropEmpire match started! Game loop initialised.")]
         };
       });
     }
@@ -597,7 +605,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setIsRolling(true);
       setGameState(prev => ({
         ...prev,
-        logs: [createLog(`${activePlayer.name} shaking dice...`), ...prev.logs]
+        logs: [...prev.logs, createLog(`${activePlayer.name} shaking dice...`)]
       }));
 
       setTimeout(() => {
@@ -614,9 +622,10 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           let pBalance = p.balance;
           const logs = [...prev.logs];
           
+          logs.push(createLog(`${p.name} rolled [${d1}, ${d2}] (Total: ${steps}) and landed on ${prev.tiles[newPos].name}.`, "roll"));
           if (newPos < oldPos) {
             pBalance += 200;
-            logs.unshift(createLog(`${p.name} passed START and collected ◈200 surplus.`, "system"));
+            logs.push(createLog(`${p.name} passed START and collected ◈200 surplus.`, "system"));
           }
           
           const updatedPlayers = prev.players.map((player, idx) => {
@@ -629,8 +638,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             }
             return player;
           });
-
-          logs.unshift(createLog(`${p.name} rolled [${d1}, ${d2}] (Total: ${steps}) and landed on ${prev.tiles[newPos].name}.`, "roll"));
 
           let nextState: GameState = {
             ...prev,
@@ -680,7 +687,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           players: updatedPlayers,
           tiles: updatedTiles,
-          logs: [createLog(`${p.name} purchased ${tile.name} for ◈${price}.`, "buy"), ...prev.logs]
+          logs: [...prev.logs, createLog(`${p.name} purchased ${tile.name} for ◈${price}.`, "buy")]
         };
       });
     }
@@ -728,7 +735,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           hasRolledThisTurn: false,
           turnTimer: 60,
           drawnCard: null,
-          logs: [createLog(`--- Turn transitioned to ${prev.players[nextIdx].name} ---`), ...prev.logs]
+          logs: [...prev.logs, createLog(`--- Turn transitioned to ${prev.players[nextIdx].name} ---`)]
         };
       });
     }
@@ -764,7 +771,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           tiles: updatedTiles,
           players: updatedPlayers,
-          logs: [createLog(`Built a House on ${tile.name} (Paid ◈${cost}).`, "build"), ...prev.logs]
+          logs: [...prev.logs, createLog(`Built a House on ${tile.name} (Paid ◈${cost}).`, "build")]
         };
       });
     }
@@ -798,7 +805,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           tiles: updatedTiles,
           players: updatedPlayers,
-          logs: [createLog(`Upgraded to a Hotel on ${tile.name} (Paid ◈${cost}).`, "build"), ...prev.logs]
+          logs: [...prev.logs, createLog(`Upgraded to a Hotel on ${tile.name} (Paid ◈${cost}).`, "build")]
         };
       });
     }
@@ -827,7 +834,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           tiles: updatedTiles,
           players: updatedPlayers,
-          logs: [createLog(`Mortgaged ${tile.name} (Received ◈${mortgageVal}).`, "mortgage"), ...prev.logs]
+          logs: [...prev.logs, createLog(`Mortgaged ${tile.name} (Received ◈${mortgageVal}).`, "mortgage")]
         };
       });
     }
@@ -857,7 +864,42 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           tiles: updatedTiles,
           players: updatedPlayers,
-          logs: [createLog(`Unmortgaged ${tile.name} (Paid ◈${unmortgageVal}).`, "mortgage"), ...prev.logs]
+          logs: [...prev.logs, createLog(`Unmortgaged ${tile.name} (Paid ◈${unmortgageVal}).`, "mortgage")]
+        };
+      });
+    }
+  };
+
+  const sellHouse = (tileIdx: number) => {
+    if (useBackend) {
+      socket.emit("SELL_HOUSE", { roomId: gameState.roomId, tileIndex: tileIdx });
+    } else {
+      const tile = gameState.tiles[tileIdx];
+      const humanId = myPlayerId || "p1";
+      if (!tile || tile.type !== "PROPERTY" || tile.ownerId !== humanId || tile.houseCount <= 0) return;
+      
+      const districtTiles = gameState.tiles.filter(t => t.district === tile.district);
+      const maxHouses = Math.max(...districtTiles.map(t => t.houseCount));
+      
+      // Enforce even selling (must sell from property with most houses first)
+      if (tile.houseCount !== maxHouses) return;
+
+      const refund = Math.floor((tile.houseCost || 100) / 2);
+
+      setGameState(prev => {
+        const updatedTiles = prev.tiles.map(t => {
+          if (t.index === tileIdx) return { ...t, houseCount: t.houseCount - 1 };
+          return t;
+        });
+        const updatedPlayers = prev.players.map(p => {
+          if (p.id === humanId) return { ...p, balance: p.balance + refund };
+          return p;
+        });
+        return {
+          ...prev,
+          tiles: updatedTiles,
+          players: updatedPlayers,
+          logs: [...prev.logs, createLog(`Sold a ${tile.houseCount === 5 ? "Hotel" : "House"} on ${tile.name} (Refunded ◈${refund}).`, "build")]
         };
       });
     }
@@ -929,7 +971,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             return t;
           });
 
-          logs.unshift(createLog(`Trade deal Accepted! Assets transferred between ${proposer.name} and ${receiver.name}.`, "trade"));
+          logs.push(createLog(`Trade deal Accepted! Assets transferred between ${proposer.name} and ${receiver.name}.`, "trade"));
           
           return {
             ...prev,
@@ -939,7 +981,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             logs
           };
         } else {
-          logs.unshift(createLog(`Trade proposal declined by ${receiver.name}.`, "trade"));
+          logs.push(createLog(`Trade proposal declined by ${receiver.name}.`, "trade"));
           return {
             ...prev,
             trade: { ...prev.trade, isActive: false },
@@ -961,7 +1003,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return {
           ...result.state,
           drawnCard: null,
-          logs: [createLog(result.log, "card"), ...result.state.logs]
+          logs: [...result.state.logs, createLog(result.log, "card")]
         };
       });
     }
@@ -983,7 +1025,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return {
           ...prev,
           players: updatedPlayers,
-          logs: [createLog(`${activePlayer.name} paid ◈50 fine to exit Detention.`, "jail"), ...prev.logs]
+          logs: [...prev.logs, createLog(`${activePlayer.name} paid ◈50 fine to exit Detention.`, "jail")]
         };
       });
     }
@@ -1004,7 +1046,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         return {
           ...prev,
           players: updatedPlayers,
-          logs: [createLog(`${activePlayer.name} used Detention Clearance Card. Set free!`, "jail"), ...prev.logs]
+          logs: [...prev.logs, createLog(`${activePlayer.name} used Detention Clearance Card. Set free!`, "jail")]
         };
       });
     }
@@ -1030,21 +1072,21 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           let pPos = p.position;
           let pBal = p.balance;
 
-          logs.unshift(createLog(`${p.name} rolled [${d1}, ${d2}] for doubles escaping Detention.`, "roll"));
+          logs.push(createLog(`${p.name} rolled [${d1}, ${d2}] for doubles escaping Detention.`, "roll"));
 
           if (d1 === d2) {
             pInDetention = false;
             pTurns = 0;
             pPos = (p.position + d1 + d2) % 40;
-            logs.unshift(createLog(`${p.name} rolled doubles! Set free to move ${d1+d2} spaces to ${prev.tiles[pPos].name}.`, "jail"));
+            logs.push(createLog(`${p.name} rolled doubles! Set free to move ${d1+d2} spaces to ${prev.tiles[pPos].name}.`, "jail"));
           } else {
             pTurns++;
-            logs.unshift(createLog(`${p.name} failed doubles. (Detention turn ${pTurns}/3)`, "jail"));
+            logs.push(createLog(`${p.name} failed doubles. (Detention turn ${pTurns}/3)`, "jail"));
             if (pTurns >= 3) {
               pBal = Math.max(0, pBal - 50);
               pInDetention = false;
               pTurns = 0;
-              logs.unshift(createLog(`${p.name} served maximum term. Paid forced fine of ◈50.`, "jail"));
+              logs.push(createLog(`${p.name} served maximum term. Paid forced fine of ◈50.`, "jail"));
             }
           }
 
@@ -1130,7 +1172,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                     hasRolledThisTurn: false,
                     turnTimer: s.turnTimerLimit || 60,
                     drawnCard: null,
-                    logs: [createLog(`--- Turn transitioned to ${s.players[nextIdx].name} ---`), ...s.logs]
+                    logs: [...s.logs, createLog(`--- Turn transitioned to ${s.players[nextIdx].name} ---`)]
                   };
                 }
                 return s;
@@ -1245,6 +1287,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         buildHotel,
         mortgageProperty,
         unmortgageProperty,
+        sellHouse,
         proposeTrade,
         respondToTrade,
         dismissCard,
